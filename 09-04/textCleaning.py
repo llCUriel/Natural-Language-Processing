@@ -1,6 +1,7 @@
 # Reading the e960401 file for basic manipulation
 
 import re
+import math
 import string
 from functools import reduce
 import numpy as np
@@ -27,9 +28,11 @@ def save_words(name, words):
 def get_context(tokens, word, window=8):
     '''Get the context or bag of words of a given word inside a text'''
     bag = []
-    for cl in tokens.concordance_list(word):
-        left = list(cl[0][-window//2:])
-        right = list(cl[2][:window//2])
+    cl = tokens.concordance_list(word, lines=tokens.count(word))
+    # tokens.concordance(word)
+    for c in cl:
+        left = list(c[0][-window//2:])
+        right = list(c[2][:window//2])
         bag += left
         bag += right
     return list(bag)
@@ -52,8 +55,11 @@ for c in string.punctuation:
 tokens = nltk.Text(nltk.word_tokenize(parsedText))
 print("Amount of raw tokens ", len(tokens))
 stopwords = nltk.corpus.stopwords.words('spanish')
+# tokens = remove_characters_after_tokenization([
+#     t.lower() for t in tokens if t.isalpha() and t.lower() not in stopwords])
+# Para usar stopwords
 tokens = remove_characters_after_tokenization([
-    t.lower() for t in tokens if t.isalpha() and t.lower() not in stopwords])
+     t.lower() for t in tokens if t.isalpha()])
 tokens = nltk.Text(tokens)
 save_words('tokens.txt', tokens)
 
@@ -66,24 +72,35 @@ print(vocabulary[:20])
 print(vocabulary[-20:])
 
 # Get the context, and compute the similarity between search words
-search_words = ['empresa', 'agua', 'compañía']
+# search_words = ['empresa', 'agua', 'compañía', 'empresa']
+search_words = ['empresa'] + vocabulary
 vectors = []
 for w in search_words:
     bag = get_context(tokens, w, 8)
-    print("The bag of words of '", w, "' is: ", bag[:8])
-    save_words('context-'+w+'.txt', bag)
-    vector = np.array([bag.count(t) for t in vocabulary])
-    print("The vector of ", w, " is ", vector)
+    # print("The bag of words of '", w, "' is: ", bag[:8])
+    # save_words('context-'+w+'.txt', bag)
+    vector = [np.array([bag.count(t)/len(bag) for t in vocabulary]), 0, w]
+    # print("The vector of ", w, " is ", vector)
     vectors.append(vector)
     # Check if we count all items correctly
     # assert len(bag) == reduce((lambda x, y: x+y), vector)
-    # assert len(bag) == np.sum(vector)
+    # assert len(bag) == vector.sum()
 
-print("Vectors are ", vectors)
+# print("Vectors are ", vectors)
 
-for i in range(len(search_words)):
+for i in range(1):
     for j in range(i+1, len(search_words)):
-        sim = np.dot(vectors[i], vectors[j])
-        r = "sim({}, {}) = {}".format(search_words[i], search_words[j], sim)
+        dot = np.dot(vectors[i][0], vectors[j][0])
+        mag1 = np.sqrt(vectors[i][0].dot(vectors[i][0]))
+        mag2 = np.sqrt(vectors[j][0].dot(vectors[j][0]))
+        sim = dot/(mag1*mag2)
+        vectors[j][1] = sim
+
+vectors = sorted(vectors, key=lambda e: e[1], reverse=True)
+
+similarWords = []
+for i in range(50):
+        r = "sim({}, {}) = {}".format(search_words[0], vectors[i][2],
+                                      vectors[i][1])
+        similarWords.append(vectors[i][1])
         print(r)
-# text.similar('empresa')
