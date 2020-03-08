@@ -55,11 +55,11 @@ for c in string.punctuation:
 tokens = nltk.Text(nltk.word_tokenize(parsedText))
 print("Amount of raw tokens ", len(tokens))
 stopwords = nltk.corpus.stopwords.words('spanish')
-# tokens = remove_characters_after_tokenization([
-#     t.lower() for t in tokens if t.isalpha() and t.lower() not in stopwords])
-# Para usar stopwords
 tokens = remove_characters_after_tokenization([
-     t.lower() for t in tokens if t.isalpha()])
+    t.lower() for t in tokens if t.isalpha() and t.lower() not in stopwords])
+# Para usar stopwords
+# tokens = remove_characters_after_tokenization([
+#      t.lower() for t in tokens if t.isalpha()])
 tokens = nltk.Text(tokens)
 save_words('tokens.txt', tokens)
 
@@ -75,16 +75,48 @@ print(vocabulary[-20:])
 # search_words = ['empresa', 'agua', 'compañía', 'empresa']
 search_words = ['empresa'] + vocabulary
 vectors = []
+bags = []
+# K = [1.2, 2] 
+k = 1.2
 for w in search_words:
     bag = get_context(tokens, w, 8)
     # print("The bag of words of '", w, "' is: ", bag[:8])
     # save_words('context-'+w+'.txt', bag)
-    vector = [np.array([bag.count(t)/len(bag) for t in vocabulary]), 0, w]
+    # using term frequency
+    # vector = [np.array([bag.count(t) for t in vocabulary]), 0, w]
+    # EOWC using probabilistic term
+    # vector = [np.array([bag.count(t)/len(bag) for t in vocabulary]), 0, w]
+    # Using TF Transformation: BM25
+    # vector = [np.array([((1+bag.count(t))*k) / (bag.count(t)+k)
+    #           for t in vocabulary]), 0, w]
+    # Inverse Document Frequency First Part Get all bags of term frequency
+    # vector = [np.array([bag.count(t) for t in vocabulary]), 0, w]
     # print("The vector of ", w, " is ", vector)
+
+    # Using TF*IDF
+    vector = [np.array([((1+bag.count(t))*k) / (bag.count(t)+k)
+              for t in vocabulary]), 0, w]
     vectors.append(vector)
+    bags.append(bag)
     # Check if we count all items correctly
     # assert len(bag) == reduce((lambda x, y: x+y), vector)
-    # assert len(bag) == vector.sum()
+
+# for i in range(1, len(vectors)):
+#   # k = 0
+#   # for j in range(1, len(vectors)):
+#       # if vectors[i][2] in bags[j]:
+#           # k += 1
+
+#   # for j in range(len(vectors[i][3])):
+#       # vectors[i][3][j] = math.log10(len(vocabulary)+1 / k)
+for i in range(1, len(vectors)):
+    itf = [1 for j in range(len(vocabulary))]
+    for j in range(len(vocabulary)):
+        itf[j] = math.log10((len(vocabulary)+1) / len(set(bags[j])))
+    # for j in range(len(vocabulary)):
+        # print(vectors[i][0][j], itf[j], vectors[i][0][j]*itf[j])
+
+    vectors[i][0] = vectors[i][0]*itf
 
 # print("Vectors are ", vectors)
 
@@ -99,7 +131,7 @@ for i in range(1):
 vectors = sorted(vectors, key=lambda e: e[1], reverse=True)
 
 similarWords = []
-for i in range(50):
+for i in range(20):
         r = "sim({}, {}) = {}".format(search_words[0], vectors[i][2],
                                       vectors[i][1])
         similarWords.append(vectors[i][1])

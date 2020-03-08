@@ -1,0 +1,22 @@
+DeprecationWarning: This module was deprecated in version 0.18 in favor
+of the model_selection module into which all the refactored classes and
+functions are moved. Also note that the interface of the new CV iterators
+are different from that of this module. This module will be removed in
+0.20.
+ "This module will be removed in 0.20.", DeprecationWarning)
+
+ The accuracy is : 0.382329113258
+ Matriz:
+ [[28 36 13 3 0]
+ [16 80 64 13 0]
+ [5 55 129 50 15]
+ [2 17 80 52 31]
+ [1 8 30 56 34]]
+
+  precision     recall    puntaje      support
+1    0.49        0.45       0.47          72
+2    0.42        0.46       0.44         174
+3    0.30        0.41       0.46         250
+4    0.28        0.29       0.35         180
+5    0.42        0.30       0.30         106
+pro  0.45        0.44       0.45         770
